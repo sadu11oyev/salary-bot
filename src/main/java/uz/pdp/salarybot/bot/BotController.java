@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import uz.pdp.salarybot.entity.TelegramUser;
+import uz.pdp.salarybot.entity.enums.TelegramState;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,8 @@ public class BotController {
                 String text = message.text();
                 if (text.equals("/start")){
                     botServiceI.acceptStartSendShareContact(message,tgUser);
+                } else if (tgUser.getState().equals(TelegramState.SELECT_MONTH)) {
+                    botServiceI.acceptMonthSendAnswer(message,tgUser);
                 }
             } else if (message.contact()!=null) {
                 Contact contact = message.contact();

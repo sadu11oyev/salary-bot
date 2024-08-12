@@ -13,6 +13,7 @@ import uz.pdp.salarybot.entity.abs.AbsEntity;
 @Entity
 @Table(name = "users")
 public class User extends AbsEntity {
+    private Long chatId;
     private String phone;
     private String fullName;
 }

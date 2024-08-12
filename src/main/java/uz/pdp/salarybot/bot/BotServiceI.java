@@ -10,4 +10,6 @@ public interface BotServiceI {
     TelegramUser getOrCreateTelegramUser(Long id);
 
     void acceptContactConfirmIdentity(Contact contact, TelegramUser tgUser);
+
+    void acceptMonthSendAnswer(Message message, TelegramUser tgUser);
 }

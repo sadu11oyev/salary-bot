@@ -7,8 +7,10 @@ import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uz.pdp.salarybot.entity.TelegramUser;
+import uz.pdp.salarybot.entity.User;
 import uz.pdp.salarybot.entity.enums.TelegramState;
 import uz.pdp.salarybot.repo.TelegramUserRepository;
+import uz.pdp.salarybot.repo.UserRepository;
 
 import java.util.Optional;
 
@@ -16,6 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BotService implements BotServiceI {
     private final TelegramUserRepository telegramUserRepository;
+    private final UserRepository userRepository;
     private final BotUtils botUtils;
     private final TelegramBot telegramBot;
 
@@ -43,7 +46,35 @@ public class BotService implements BotServiceI {
     @Override
     public void acceptContactConfirmIdentity(Contact contact, TelegramUser tgUser) {
         String phoneNumber = contact.phoneNumber();
+        Optional<User> opt = Optional.ofNullable(userRepository.findByPhone(phoneNumber));
+        if (opt.isPresent()){
+            User user = opt.get();
+            user.setChatId(tgUser.getChatId());
+            SendMessage sendMessage = new SendMessage(tgUser.getChatId(),BotConstant.CHOOSE_MONTH);
+            sendMessage.replyMarkup(botUtils.generateMonthButtons());
+            telegramBot.execute(sendMessage);
+            tgUser.setState(TelegramState.SELECT_MONTH);
+            userRepository.save(user);
+        }else {
+            SendMessage sendMessage = new SendMessage(tgUser.getChatId(),BotConstant.UNKNOWN_USER);
+            telegramBot.execute(sendMessage);
+            tgUser.setState(TelegramState.UNKNOWN_USER);
+        }
+        telegramUserRepository.save(tgUser);
+    }
 
-
+    @Override
+    public void acceptMonthSendAnswer(Message message, TelegramUser tgUser) {
+        String text = message.text();
+        String[] parts = text.split(" ");
+        String month =parts[0];
+        String year =parts[1];
+        User user = userRepository.findByChatId(message.chat().id());
+        SendMessage sendMessage = new SendMessage(user.getChatId(), """
+                Your name is:%s
+                Selected month: %s
+                Selected year: %s
+                """.formatted(user.getFullName(),month,year));
+        telegramBot.execute(sendMessage);
     }
 }
